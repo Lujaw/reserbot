@@ -19,10 +19,7 @@
 
 import random
 import numpy, Oger, mdp
-
-def normalize(x):    
-    n = numpy.linalg.norm(x)
-    return x/n
+import aux
 
 class NeuralSeq:
     
@@ -54,7 +51,7 @@ class NeuralSeq:
         self.Wout = (numpy.random.random((rsize,osize))-0.5)*0.001 # we set some small weights in output
     
     def train_delta(self,x,y,lrate_delta, lrate_lambda): # good parameters: lrate_delta = 0.1, lrate_lambda = 0.01
-
+	"Train Wout using stochastic gradient descent"
         xr = self.preprocess(x)
         
         (z,sse) = self.sse(x,y)
@@ -102,14 +99,7 @@ class NeuralSeq:
             t = numpy.array([x[i]])
             assert(t.shape == (1,self.isize))
             
-            
             z[i] = self.next(t)
-            
-            """print "z[i]"
-            print z[i]
-            print "y[i]"
-            print y[i]
-            """
             
             sse = sse + numpy.linalg.norm(z[i] - y[i])
             
@@ -168,11 +158,10 @@ class NeuralSeq:
             
         esnout = self.last_state.copy()
         esnout = numpy.dot(esnout,self.Wout)                 #compute esnout
-        esnout = normalize(esnout)
+        esnout = aux.normalize(esnout)
         return esnout
     
     def save(self,name):
-	
 	nsf = open(name+".npz", "a")
 	
 	numpy.save(nsf,numpy.array([self.isize,self.rsize, self.osize]))

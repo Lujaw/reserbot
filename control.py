@@ -20,18 +20,75 @@
 from tokipona         import *
 from tokipona_modules import *
 
-bootstrap(corpus)
+import cmd, readline, sys
+
+def process(inp):
+    (p, ws) =  input(inp)
+    out = output(p,3,3,3)
+    return out
 
 
+class Shell(cmd.Cmd):
+    intro = 'Welcome to the reserbot shell.   Type help or ? to list commands.\n'
+    prompt = '--> '
+    
+    # ----- basic commands -----
+    
+    def do_quit(self, arg):
+        ''
+        print "Bye!"
+        sys.exit(0)
+    
+    def do_exit(self, arg):
+        ''
+        self.do_quit(arg)
+    def do_EOF(self, arg):
+        ''
+        print ""
+        self.do_quit(arg)
+    
+    def do_start(self, arg):
+        ''
+        if (arg == "chat"):
+            print "hello!"
+    
+    def do_end(self, arg):
+        ''
+        if (arg == "chat"):
+            print "bye!"
+    
+    def do_bootstrap(self, arg):
+        'Start bootstrapping process.'
+        print "Bootstrapping toki pona. This can take a while..."
+        bootstrap(corpus, True)
+        print "Saving bootstrapped neurosequencer."
+        save()
+        
+    def do_say(self, arg):
+        'Say something to the bot'
+        print "Processing \""+arg+"\""
+        
+    def default(self, arg):
+        print "Invalid command!"
+    
+    def precmd(self, line):
+        if line <> "EOF":
+            line = line.lower()
+        return line
+    
+    def emptyline(self):
+        return 0
+    
+
+Shell().cmdloop()
+
+"""
 #lastp = numpy.repeat(0,phrase_len) # null phrase, at the beggining of conversation 
-
 while (True):
     print "--> ",
     inp = raw_input()
-    (p, ws) =  input(inp)
-    
-    response = output(p,3,3,3)
     print "<== "+response
     #learn(lastp,ws)
     
     #lastp = p
+"""

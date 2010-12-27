@@ -19,6 +19,10 @@
 
 from numpy import *
 
+def normalize(x):    
+    n = linalg.norm(x)
+    return x/n
+
 def list2vec(c,alphabet):
     try: 
         f = alphabet.index(c)

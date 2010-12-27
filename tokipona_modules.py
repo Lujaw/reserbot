@@ -21,7 +21,7 @@ from ns        import *
 from structure import *
 from tokipona  import *
 from numpy     import *
-#import matplotlib.pylab
+import matplotlib.pylab
 
 # input :: String -> (Vector, [Vector])
 # effects: None
@@ -86,12 +86,13 @@ def output(vphrase, max_words, max_syls, max_letters):
 
 
     
-def bootstrap(words):
+def bootstrap(words, debug = False):
     
-    plotp = []
+    plotptest = []
+    plotptrain = []
     
-    max_lr = 0.1
-    min_lr = 0.1
+    max_lr = 0.2
+    min_lr = 0.001
     
     pwords = random.permutation(words)
     tsc = int((len(words)/100.0)*70)
@@ -111,7 +112,9 @@ def bootstrap(words):
         word=word+" "
         #print "using: ",word
         if (it % 10 == 0):
-            print test(tests)
+            print it
+            plotptest.append(test(tests))
+            plotptrain.append(test(trains))
 
         for syl in silabizar(word,map (lambda s: filter(lambda l: l<>'-',s), syllable)):
             
@@ -137,7 +140,8 @@ def bootstrap(words):
                 seqWordSyllables.reset()
                 #for i in range(2):
                 #print ((min_lr-max_lr)/its)*it + max_lr
-                seqWordSyllables.train_delta(x,y,((min_lr-max_lr)/its)*it + max_lr,0.0)
+                lr = ((min_lr-max_lr)/its)*it + max_lr
+                seqWordSyllables.train_delta(x,y,lr,0.0)
                 ys = []
                 
             else:
@@ -159,14 +163,21 @@ def bootstrap(words):
         
                 ys.append(z.copy())
                 seqSyllableLetters.reset()
+                lr = ((min_lr-max_lr)/its)*it + max_lr
+                seqSyllableLetters.train_delta(x,y,lr,0.0)
                 
-                seqSyllableLetters.train_delta(x,y,0.1,0.01)
-                
-    #matplotlib.pylab.show(matplotlib.pylab.plot(plotp))
+    if debug:
+        testp = matplotlib.pylab.plot(range(0,its,10),plotptest)
+        trainp = matplotlib.pylab.plot(range(0,its,10),plotptrain)
+        matplotlib.pylab.show(testp+trainp)
+    
+
+def save():
     seqSyllableLetters.save("seqSyllableLetters")
     seqWordSyllables.save("seqWordSyllables")
 
-def test(con):
+
+def test(con, debug = False):
     err = 0
     for inp in con:
 	
@@ -183,8 +194,9 @@ def test(con):
         
         seqWordSyllables.reset()
         
-        print ""
-        print inp, "-> ",
+        if debug:
+            print ""
+            print inp, "-> ",
         
         for i in range(len(ys)):
             t = seqWordSyllables.next(z)
@@ -204,7 +216,8 @@ def test(con):
                 c = abc[tt.argmax()] 
                 r = r+c
             
-            print r+"_",
+            if debug:
+                print r+"_",
             #print "-",
     
     #print ""
