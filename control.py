@@ -35,38 +35,45 @@ class Shell(cmd.Cmd):
     # ----- basic commands -----
     
     def do_quit(self, arg):
-        ''
+        'Quit.'
         print "Bye!"
         sys.exit(0)
     
     def do_exit(self, arg):
-        ''
+        'Quit.'
         self.do_quit(arg)
     def do_EOF(self, arg):
-        ''
+        'Quit.'
         print ""
         self.do_quit(arg)
     
     def do_start(self, arg):
-        ''
-        if (arg == "chat"):
-            print "hello!"
+        'Start conversation'
+        print "Conversation started."
     
     def do_end(self, arg):
-        ''
-        if (arg == "chat"):
-            print "bye!"
+        'End conversation'
+        print "Conversation ended."
     
     def do_bootstrap(self, arg):
         'Start bootstrapping process.'
         print "Bootstrapping toki pona. This can take a while..."
         bootstrap(corpus, True)
-        print "Saving bootstrapped neurosequencer."
+        
+    def do_save(self, arg):
+        'Load weights to file.'
+        print "Saving bootstrapped neurosequencers."
         save()
+    
+    def do_load(self, arg):
+        'Load weights from file.'
+        print "Loading bootstrapped neurosequencers."
+        load()
         
     def do_say(self, arg):
         'Say something to the bot'
         print "Processing \""+arg+"\""
+        print "<== "+process(arg)
         
     def default(self, arg):
         print "Invalid command!"

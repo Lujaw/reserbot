@@ -21,34 +21,51 @@ import random
 import numpy, Oger, mdp
 import aux
 
-class NeuralSeq:
-    
-    """
-    def __init__(self,name):
-
-	nsf = open(name+".npz", "r")
-	p = numpy.load(nsf)
-	self.isize = p[0]
-	self.rsize = p[1]
-	self.osize = p[2]
+class NeuralSeq:    
+    #def __init__(self,isize = None, rsize = None, osize = None ,f = None):
+    def __init__(self,*args):
 	
-	nsf.close()
-    """
-    
-    def __init__(self,isize,rsize,osize,f):
-	""" configuration of a standard ESN """
-	self.isize = isize
-	self.rsize = rsize
-	self.osize = osize
+	if (len(args) == 2 and isinstance(args[0],str)):
+	    filename = args[0]
+	    f = args[1]
+	    
+	    nsf = open(filename+".npz", "r")
+	    
+	    p = numpy.load(nsf)
+	    self.isize = p[0]
+	    self.rsize = p[1]
+	    self.osize = p[2]
+	    
+	    w = numpy.load(nsf)
+	    print w.shape
+	    w_in = numpy.load(nsf)
+	    print w_in.shape
+	    initial_state = numpy.load(nsf)
+	    print initial_state
+	    
+	    self.net = Oger.nodes.ReservoirNode(self.isize, self.rsize, dtype='single', w_in=w_in, w=w, w_bias=None)
+	    self.net.initial_state = initial_state
+	    
+	    self.last_state = self.net.initial_state
+	    self.f = f
+	    self.Wout = numpy.load(nsf)
+	    
+	    nsf.close()
 	
-        self.reservoir = Oger.nodes.ReservoirNode(isize, rsize, input_scaling=1, dtype='single')
-        self.readout = None
+	elif (len(args) == 4):	    
+	    self.isize = args[0]
+	    self.rsize = args[1]
+	    self.osize = args[2]
+	
+	    self.net = Oger.nodes.ReservoirNode(self.isize, self.rsize, dtype='single')
+	    self.last_state = self.net.initial_state
         
-        self.net = self.reservoir
-        self.last_state = self.net.initial_state
-        
-        self.f = f
-        self.Wout = (numpy.random.random((rsize,osize))-0.5)*0.001 # we set some small weights in output
+	    self.f = args[3]
+	    self.Wout = (numpy.random.random((self.rsize,self.osize))-0.5)*0.001 # we set some small weights in output
+	else:
+	    assert(False)
+	    
+	    
     
     def train_delta(self,x,y,lrate_delta, lrate_lambda): # good parameters: lrate_delta = 0.1, lrate_lambda = 0.01
 	"Train Wout using stochastic gradient descent"
@@ -162,11 +179,13 @@ class NeuralSeq:
         return esnout
     
     def save(self,name):
-	nsf = open(name+".npz", "a")
+	nsf = open(name+".npz", "wa")
 	
 	numpy.save(nsf,numpy.array([self.isize,self.rsize, self.osize]))
+	numpy.save(nsf,self.net.w)
+	numpy.save(nsf,self.net.w_in)
+	numpy.save(nsf,self.net.initial_state)
 	numpy.save(nsf,self.Wout)
-	self.net.save(name+".net")
 	
 	nsf.close()
 	

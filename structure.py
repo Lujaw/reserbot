@@ -42,6 +42,3 @@ seqSyllableLetters = NeuralSeq( syllable_len,  nres, letter_len,       identity)
 
 # asociator 
 seqPhraseWords     = NeuralSeq( phrase_len,    nres, word_len,         identity) # non textual output coming soon!
-
-def init():
-    return 0

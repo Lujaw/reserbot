@@ -21,8 +21,9 @@ from ns        import *
 from structure import *
 from tokipona  import *
 from numpy     import *
-import matplotlib.pylab
 
+import matplotlib.pylab
+from aux import *
 # input :: String -> (Vector, [Vector])
 # effects: None
 
@@ -47,7 +48,11 @@ def input(inp):
 # output :: Vector -> Int -> Int -> Int -> String
 # effects: seqPhraseWords.net.initial_state is changed
 
-def output(vphrase, max_words, max_syls, max_letters):
+def output(vphrase, max_words_, max_syls_, max_letters_):
+    
+        max_words = max_words_
+        max_syls  = max_syls_
+        max_letters = max_letters_
     
         phrase = ""
         word = ""
@@ -55,31 +60,37 @@ def output(vphrase, max_words, max_syls, max_letters):
         while (word <> "." and max_words > 0):
             
             vword = seqPhraseWords.next(vphrase)  # it's magic !
-            
+            word = ""
             syl = ""
+                
+            max_syls  = max_syls_
             
             while (syl <> " " and syl <> "." and max_syls > 0):
                 
                 vsyl = seqWordSyllables.next(vword)
-                
+                syl = ""
                 letter = ""
                 
+                max_letters = max_letters_
+                
                 while (letter <> " " and letter <> "." and letter <> "-" and max_letters > 0):
+                    letter = ""
                     t = seqSyllableLetters.next(vsyl)
                     letter = abc[t.argmax()]
                     syl = syl+letter
                     max_letters = max_letters - 1
                     
                 seqSyllableLetters.reset()
-            
-                word = word + syl + ","
-                syl = ""
+                word = word + syl
+                if (syl[-1] <> "-"):
+                    word = word + "-"
                 max_syls = max_syls - 1
             
             seqWordSyllables.reset()
-                
-            phrase = phrase + word + ";"
-            word = ""
+            phrase = phrase + word
+            if (word[-1] <> " "):
+                phrase = phrase + " "
+            
             max_words = max_words - 1
             
         return phrase
@@ -91,7 +102,7 @@ def bootstrap(words, debug = False):
     plotptest = []
     plotptrain = []
     
-    max_lr = 0.2
+    max_lr = 0.1
     min_lr = 0.001
     
     pwords = random.permutation(words)
@@ -103,7 +114,7 @@ def bootstrap(words, debug = False):
     print "i: ",tsc
     
     ys  = []
-    its = 10*tsc
+    its = 50*tsc
     
     for it in range(its):
         
@@ -111,7 +122,7 @@ def bootstrap(words, debug = False):
         
         word=word+" "
         #print "using: ",word
-        if (it % 10 == 0):
+        if (it % 50 == 0):
             print it
             plotptest.append(test(tests))
             plotptrain.append(test(trains))
@@ -167,15 +178,91 @@ def bootstrap(words, debug = False):
                 seqSyllableLetters.train_delta(x,y,lr,0.0)
                 
     if debug:
-        testp = matplotlib.pylab.plot(range(0,its,10),plotptest)
-        trainp = matplotlib.pylab.plot(range(0,its,10),plotptrain)
+        testp = matplotlib.pylab.plot(range(0,its,50),plotptest)
+        trainp = matplotlib.pylab.plot(range(0,its,50),plotptrain)
         matplotlib.pylab.show(testp+trainp)
     
 
 def save():
+    
+    print "Saving seqLetterSyllable"
+    seqLetterSyllable.save("seqLetterSyllable")
+    print "Saving seqSyllableWord"
+    seqSyllableWord.save("seqSyllableWord")
+    print "Saving seqWordPhrase"
+    seqWordPhrase.save("seqWordPhrase")
+    
+    print "Saving seqSyllableLetters"
     seqSyllableLetters.save("seqSyllableLetters")
+    print "Saving seqWordSyllables"
     seqWordSyllables.save("seqWordSyllables")
+    print "Saving seqPhraseWords"
+    seqPhraseWords.save("seqPhraseWords")
 
+def load():
+
+    global seqLetterSyllable, seqSyllableWord, seqWordPhrase, seqWordSyllables, seqSyllableLetters, seqPhraseWords
+
+    name = "seqLetterSyllable"
+    print "Loading "+name
+    try:
+        nsf = open(name+".npz", "r")
+    except IOError:
+        print "#Warning \'",name,".npz\' is not a file or directory"
+        
+    seqLetterSyllable = NeuralSeq(name, (lambda i: process(i,abc)))
+    nsf.close()
+    
+    name = "seqSyllableWord"
+    print "Loading "+name
+    try:
+        nsf = open(name+".npz", "r")
+    except IOError:
+        print "#Warning \'",name,".npz\' is not a file or directory"
+        
+    seqSyllableWord = NeuralSeq(name, identity)
+    nsf.close()
+    
+    name = "seqWordPhrase"
+    print "Loading "+name
+    try: 
+        nsf = open(name+".npz", "r")
+    except IOError:
+        print "#Warning \'",name,".npz\' is not a file or directory"
+        
+    seqWordPhrase = NeuralSeq(name, identity)
+    nsf.close()
+    
+    name = "seqWordSyllables"
+    print "Loading "+name
+    try: 
+        nsf = open(name+".npz", "r")
+    except IOError:
+        print "#Warning \'",name,".npz\' is not a file or directory"
+        
+    seqWordSyllables = NeuralSeq(name, identity)
+    nsf.close()
+    
+    name = "seqSyllableLetters"
+    print "Loading "+name 
+    try: 
+        nsf = open(name+".npz", "r")
+    except IOError:
+        print "#Warning \'",name,".npz\' is not a file or directory"
+        
+    seqSyllableLetters = NeuralSeq(name, identity)
+    nsf.close()
+    
+    name = "seqPhraseWords"
+    print "Loading "+name
+    try: 
+        nsf = open(name+".npz", "r")
+    except IOError:
+        print "#Warning \'",name,".npz\' is not a file or directory"
+        
+    seqPhraseWords = NeuralSeq(name, identity)
+    nsf.close()
+    
 
 def test(con, debug = False):
     err = 0
