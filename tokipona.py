@@ -17,7 +17,9 @@
     Copyright 2010 neuromancer
 """
 
-corpus = map( lambda ls: filter((lambda l: l<>'\n'),ls), open('tokipona_corpus.txt','r').readlines())
+extra_words = ["."]
+
+corpus = map( lambda ls: filter((lambda l: l<>'\n'),ls), open('tokipona_corpus.txt','r').readlines())+extra_words
     
 syllable = [
 	    "a-",	"e-",	"i-",	"o-",	"u",

@@ -21,11 +21,39 @@ import random
 import numpy, Oger, mdp
 import aux
 
+class Perceptron:
+    """ A linear perceptron """
+    
+    def __init__(self, *args):
+	""""""
+	
+	if (len(args) == 1 and isinstance(args[0],numpy.ndarray)):
+	    self.Wout = args[0]
+	elif (len(args) == 2):
+	    self.Wout = (numpy.random.random((args[0],args[1]))-0.5)*0.001 # we set some small weights in output
+	else:
+	    assert(False)
+	    
+    def process(self, input):
+	""" Process an input using weight matrix """
+	return numpy.dot(input,self.Wout)
+	
+    def adjust_weigths(self, t, xr, lrate_delta, lrate_lambda):
+	""""""
+
+	(a,b) = self.Wout.shape
+	delta_w = numpy.empty((a,b))
+	for i in range(a):
+            for k in range(b): 
+                delta_w[i,k] = lrate_delta*t[k]*xr[i] -lrate_lambda*delta_w[i,k]  # not so optimal
+	
+	self.Wout = self.Wout + delta_w
+	
 class NeuralSeq:    
-    #def __init__(self,isize = None, rsize = None, osize = None ,f = None):
     def __init__(self,*args):
 	
-	if (len(args) == 2 and isinstance(args[0],str)):
+	if (len(args) == 2 and isinstance(args[0],str) and callable(args[1])):
+	    
 	    filename = args[0]
 	    f = args[1]
 	    
@@ -37,56 +65,111 @@ class NeuralSeq:
 	    self.osize = p[2]
 	    
 	    w = numpy.load(nsf)
-	    print w.shape
+	    #print w.shape
 	    w_in = numpy.load(nsf)
-	    print w_in.shape
+	    #print w_in.shape
 	    initial_state = numpy.load(nsf)
-	    print initial_state
+	    #print initial_state
 	    
-	    self.net = Oger.nodes.ReservoirNode(self.isize, self.rsize, dtype='single', w_in=w_in, w=w, w_bias=None)
+	    self.net = Oger.nodes.ReservoirNode(self.isize, self.rsize, dtype='single', w_in=w_in, w=w, w_bias=None, input_scaling=0.5)
 	    self.net.initial_state = initial_state
 	    
 	    self.last_state = self.net.initial_state
 	    self.f = f
-	    self.Wout = numpy.load(nsf)
+	    self.Out = Perceptron(numpy.load(nsf))
 	    
 	    nsf.close()
 	
-	elif (len(args) == 4):	    
+	elif (len(args) == 4 and isinstance(args[0],int) and isinstance(args[1],int) and isinstance(args[2],int) and callable(args[3])):	    
 	    self.isize = args[0]
 	    self.rsize = args[1]
 	    self.osize = args[2]
 	
-	    self.net = Oger.nodes.ReservoirNode(self.isize, self.rsize, dtype='single')
+	    self.net = Oger.nodes.ReservoirNode(self.isize, self.rsize, dtype='single', input_scaling=0.5)
 	    self.last_state = self.net.initial_state
         
 	    self.f = args[3]
-	    self.Wout = (numpy.random.random((self.rsize,self.osize))-0.5)*0.001 # we set some small weights in output
+	    self.Out = Perceptron(self.rsize,self.osize)
 	else:
 	    assert(False)
 	    
-	    
-    
-    def train_delta(self,x,y,lrate_delta, lrate_lambda): # good parameters: lrate_delta = 0.1, lrate_lambda = 0.01
-	"Train Wout using stochastic gradient descent"
-        xr = self.preprocess(x)
-        
-        (z,sse) = self.sse(x,y)
-        delta_w = numpy.empty((self.rsize,self.osize))
- 
-        for r in numpy.random.permutation(range(len(x))):        
-            
-            t = y[r] - z[r]
-            
-            for i in range(self.rsize):
-                for k in range(self.osize):
-                    delta_w[i,k] = lrate_delta*t[k]*xr[r][i] -lrate_lambda*delta_w[i,k] 
-            
-            self.Wout = self.Wout + delta_w
-            (z,sse) = self.sse(x,y)
 
-    def preprocess(self,x): # preserve(self.net.initial_state)
+    def train(self,x,y,lrate_delta, lrate_lambda): 
+        xr = self.__preprocess(x)
         
+        (z,sse) = self.__sse(x,y)
+	
+        for r in numpy.random.permutation(range(len(x))):            
+            t = y[r] - z[r]    
+            self.Out.adjust_weigths(t,xr[r],lrate_delta,lrate_lambda)
+	    (z,sse) = self.__sse(x,y)
+
+    def reset(self): # not preserve(self.net.initial_state)
+        self.net.initial_state = numpy.zeros((1,self.rsize))
+        
+        
+    def process_input(self,input):
+        
+	# Formal parameters
+	eps = 0.001
+	M   = 1000
+	
+        pinput = self.f(input)
+        
+        last_esnout = numpy.empty(self.osize,dtype=numpy.double)
+        esnout = numpy.empty(self.osize,dtype=numpy.double)
+    
+        self.reset()
+        
+        for i in xrange(len(input)):
+            
+            v = pinput[i]
+            v.shape = (1,self.isize)
+            last_esnout = self.next(v)
+        
+	
+	for i in range(M):
+	    for i in xrange(len(input)):
+                v = pinput[i]
+                v.shape = (1,self.isize)
+                esnout = self.next(v)
+                
+            if (numpy.linalg.norm(esnout-last_esnout) < eps):
+                break
+            else:
+		last_esnout = esnout
+		if (i==M-1):
+		    print "warning, "+str(input) +" is not stable at "+str(M)+" iteration"
+		    
+        return esnout.copy()
+    def next(self,input): # not preserve(net.initial_state)
+        
+        t = self.net(input)
+        t.shape = (1,self.rsize)
+        self.last_state = t                                  #saving state
+        self.net.initial_state = self.last_state             #restore state
+            
+        esnout = self.last_state.copy()
+        esnout = self.Out.process(esnout)                    #compute esnout
+        esnout = aux.normalize(esnout)
+        return esnout
+    
+    def save(self,name):
+	nsf = open(name+".npz", "wa")
+	
+	numpy.save(nsf,numpy.array([self.isize,self.rsize, self.osize]))
+	numpy.save(nsf,self.net.w)
+	numpy.save(nsf,self.net.w_in)
+	numpy.save(nsf,self.net.initial_state)
+	numpy.save(nsf,self.Out.Wout)
+	
+	nsf.close()
+	
+    def __preprocess(self,x): 
+        """
+	Properties: it preserves self.net.initial_state
+	"""
+	
         assert(x.shape == (len(x),self.isize))
         
         xr = numpy.empty((len(x),self.rsize))
@@ -105,7 +188,7 @@ class NeuralSeq:
         self.net.initial_state = ls         # load self.net.initial_state
         return xr
         
-    def sse(self,x,y): 	# preserve(self.net.initial_state)
+    def __sse(self,x,y): 	# preserve(self.net.initial_state)
         
         ls = self.net.initial_state.copy()  # save self.net.initial_state  
         z = numpy.zeros((len(x),self.osize))
@@ -123,69 +206,3 @@ class NeuralSeq:
         self.net.initial_state = ls        # load self.net.initial_state
         
         return (z,sse)
-        
-        
-    def reset(self): # not preserve(self.net.initial_state)
-        self.net.initial_state = numpy.zeros((1,self.rsize))
-        
-        
-    def process_input(self,input):
-        
-        pinput = self.f(input)
-        
-        last_esnout = numpy.empty(self.osize,dtype=numpy.double)
-        esnout = numpy.empty(self.osize,dtype=numpy.double)
-    
-        self.reset()
-        eps = 0.001
-        
-        # ESN simulation
-        
-        for i in xrange(len(input)):
-            
-            v = pinput[i]
-            v.shape = (1,self.isize)
-            #print v, last_esnout
-            last_esnout = self.next(v)
-            
-        maxi = 1000
-        while(maxi>0):
-            for i in xrange(len(input)):
-                v = pinput[i]
-                v.shape = (1,self.isize)
-                #print v, last_esnout
-                esnout = self.next(v)
-                
-            if (numpy.linalg.norm(esnout-last_esnout) < eps):
-                break
-            
-            last_esnout = esnout
-            maxi = maxi - 1
-        
-        if (maxi<0):
-            sys.stdout.write("warning, " +str(input) +" is not stable at 1000 iters (" + str(numpy.linalg.norm(esnout-last_esnout)) +"\n")
-            
-        return esnout.copy()
-    def next(self,input): # not preserve(net.initial_state)
-        
-        t = self.net(input)
-        t.shape = (1,self.rsize)
-        self.last_state = t                                  #saving state
-        self.net.initial_state = self.last_state             #restore state
-            
-        esnout = self.last_state.copy()
-        esnout = numpy.dot(esnout,self.Wout)                 #compute esnout
-        esnout = aux.normalize(esnout)
-        return esnout
-    
-    def save(self,name):
-	nsf = open(name+".npz", "wa")
-	
-	numpy.save(nsf,numpy.array([self.isize,self.rsize, self.osize]))
-	numpy.save(nsf,self.net.w)
-	numpy.save(nsf,self.net.w_in)
-	numpy.save(nsf,self.net.initial_state)
-	numpy.save(nsf,self.Wout)
-	
-	nsf.close()
-	

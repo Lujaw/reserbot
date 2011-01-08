@@ -1,0 +1,99 @@
+This is an extremly primitive version of reserbot.
+
+# Requirements (so far):
+ * Oger (http://reservoir-computing.org/organic/engine)
+
+# How to use it:
+ python control.py 
+
+# Example session
+In this example session reserbot is tought to:
+* say pona if you say toki (at first of the conversation)
+* say nasa if you say telo (at first of the conversation)
+
+Welcome to the reserbot (alpha 0) shell.
+Type help or ? to list commands.
+
+--> load
+Loading bootstrapped neurosequencers.
+Loading seqLetterSyllable
+Loading seqSyllableWord
+Loading seqWordPhrase
+Loading seqWordSyllables
+Loading seqSyllableLetters
+Loading seqPhraseWords
+--> start
+Conversation started.
+--> say toki .
+Processing "toki ."
+<== s-s-s- k-t-t- k-te-t- 
+--> say pona .
+Processing "pona ."
+<== k-te-tei- k-wei-t- k-te-t- 
+--> end
+Conversation ended.
+--> start
+Conversation started.
+--> say telo .
+Processing "telo ."
+<== s-se-s- k-se-t- k-tep-p- 
+--> say nasa .
+Processing "nasa ."
+<== m-tei-tei- k-tei-t- k-te-t- 
+--> end
+Conversation ended.
+--> rest
+Resting ...
+na-ua-ua- .- .- 
+ko-na-ua- k-ua-ua- k-ua-ua- 
+---
+ko-na-ua- .- .- 
+na-sa-ua- .- .- 
+---
+ko-na-ua- .- .- 
+ka-sa-ua- .- .- 
+---
+na-sa-ua- .- .- 
+ko-na-ua- .- .- 
+---
+ko-na-ua- .- .- 
+na-sa-ua- .- .- 
+---
+ko-na-ua- .- .- 
+na-sa-ua- .- .- 
+---
+na-sa-ua- .- .- 
+ko-na-ua- .- .- 
+---
+ko-na-ua- .- .- 
+na-sa-ua- .- .- 
+---
+na-sa-ua- .- .- 
+ko-na-ua- .- .- 
+---
+ko-na-ua- .- .- 
+na-sa-ua- .- .- 
+---
+Done.
+--> start 
+Conversation started.
+--> say toki .
+Processing "toki ."
+<== ko-na-ua- .- .- 
+--> discard
+Conversation aborted.
+--> start
+Conversation started.
+--> say telo .
+Processing "telo ."
+<== na-sa-ua- .- .- 
+--> 
+Bye!
+
+TODO (comming up!): 
+
+* Code clean up
+* Theoretical documentation
+* Command line interface
+* Jabber interface
+* Complete learning subsystem: Long term memory!
