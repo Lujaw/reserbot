@@ -1,4 +1,4 @@
-This is an extremly primitive version of reserbot.
+This is an extremely primitive version of reserbot.
 
 # Requirements (so far):
  * Oger (http://reservoir-computing.org/organic/engine)
@@ -7,7 +7,7 @@ This is an extremly primitive version of reserbot.
  python control.py 
 
 # Example session
-In this example session reserbot is tought to:
+In this example session reserbot is taught to:
 * say pona if you say toki (at first of the conversation)
 * say nasa if you say telo (at first of the conversation)
 
@@ -90,7 +90,7 @@ Processing "telo ."
 --> 
 Bye!
 
-TODO (comming up!): 
+TODO (coming up!): 
 
 * Code clean up
 * Theoretical documentation
