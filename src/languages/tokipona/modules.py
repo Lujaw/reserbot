@@ -16,6 +16,7 @@
 
     Copyright 2010 neuromancer
 """
+import os
 
 from ns        import *
 from tokipona  import *
@@ -23,7 +24,11 @@ from numpy     import *
 from aux       import *
 
 import structure as st
-import matplotlib.pylab
+
+
+# initial_phrase :: Vector
+
+initial_phrase = numpy.repeat(0,st.phrase_len) # null phrase, at the beggining of conversation
 
 # input :: String -> (Vector, [Vector])
 # effects: None
@@ -133,13 +138,13 @@ def bootstrap(words, debug = False):
             if syl == " ": # end of word
                 ys.append(st.seqLetterSyllable.process_input(list(" ")))  # we add ' '
                 # use seqSyllableWord to train seqWordSyllables
-                y = numpy.zeros((len(ys),syllable_len)) 
+                y = numpy.zeros((len(ys),st.syllable_len)) 
                 
                 for i in range(len(ys)):
                     y[i] = ys[i]
                     #print z
                     
-                x = numpy.zeros((len(ys),word_len))
+                x = numpy.zeros((len(ys),st.word_len))
                 z = st.seqSyllableWord.process_input(ys)
         
                 for i in range(len(ys)): 
@@ -159,12 +164,12 @@ def bootstrap(words, debug = False):
     
                 # use seqLetterSyllable to train seqSyllableLetters
                 syl = syl + "-"
-                y = numpy.zeros((len(syl),letter_len))
+                y = numpy.zeros((len(syl),st.letter_len))
         
                 for i in range(len(syl)): 
                     y[i] = process(syl[i],abc)
             
-                x = numpy.zeros((len(syl),syllable_len))
+                x = numpy.zeros((len(syl),st.syllable_len))
                 z = st.seqLetterSyllable.process_input(list(syl))
         
                 for i in range(len(syl)): 
@@ -176,6 +181,8 @@ def bootstrap(words, debug = False):
                 st.seqSyllableLetters.train(x,y,lr,0.0)
                 
     if debug:
+        
+        import matplotlib.pylab
         testp = matplotlib.pylab.plot(range(0,its,50),plotptest)
         trainp = matplotlib.pylab.plot(range(0,its,50),plotptrain)
         matplotlib.pylab.show(testp+trainp)
@@ -183,78 +190,89 @@ def bootstrap(words, debug = False):
 
 def save():
     
+    path = os.path.join("src","languages","tokipona","bootstrapped_data")
+    
     print "Saving seqLetterSyllable"
-    st.seqLetterSyllable.save("seqLetterSyllable")
+    st.seqLetterSyllable.save(os.path.join(path, "seqLetterSyllable"))
     print "Saving seqSyllableWord"
-    st.seqSyllableWord.save("seqSyllableWord")
+    st.seqSyllableWord.save(os.path.join(path, "seqSyllableWord"))
     print "Saving seqWordPhrase"
-    st.seqWordPhrase.save("seqWordPhrase")
+    st.seqWordPhrase.save(os.path.join(path, "seqWordPhrase"))
     
     print "Saving seqSyllableLetters"
-    st.seqSyllableLetters.save("seqSyllableLetters")
+    st.seqSyllableLetters.save(os.path.join(path, "seqSyllableLetters"))
     print "Saving seqWordSyllables"
-    st.seqWordSyllables.save("seqWordSyllables")
+    st.seqWordSyllables.save(os.path.join(path, "seqWordSyllables"))
     print "Saving seqPhraseWords"
-    st.seqPhraseWords.save("seqPhraseWords")
+    st.seqPhraseWords.save(os.path.join(path, "seqPhraseWords"))
+    
 
 def load():
 
+    path = os.path.join("src","languages","tokipona","bootstrapped_data")
+    
     name = "seqLetterSyllable"
+    name = os.path.join(path, name)
     print "Loading "+name
     try:
         nsf = open(name+".npz", "r")
     except IOError:
-        print "#Warning \'",name,".npz\' is not a file or directory"
+        print "#Warning \'"+name+".npz\' is not a file or directory"
         
     st.seqLetterSyllable = NeuralSeq(name, (lambda i: process(i,abc)))
     nsf.close()
     
     name = "seqSyllableWord"
+    name = os.path.join(path, name)
     print "Loading "+name
     try:
         nsf = open(name+".npz", "r")
     except IOError:
-        print "#Warning \'",name,".npz\' is not a file or directory"
+        print "#Warning \'"+name+".npz\' is not a file or directory"
         
     st.seqSyllableWord = NeuralSeq(name, identity)
     nsf.close()
     
     name = "seqWordPhrase"
+    name = os.path.join(path, name)
     print "Loading "+name
     try: 
         nsf = open(name+".npz", "r")
     except IOError:
-        print "#Warning \'",name,".npz\' is not a file or directory"
+        print "#Warning \'"+name+".npz\' is not a file or directory"
         
     st.seqWordPhrase = NeuralSeq(name, identity)
     nsf.close()
     
     name = "seqWordSyllables"
+    name = os.path.join(path, name)
     print "Loading "+name
     try: 
         nsf = open(name+".npz", "r")
     except IOError:
-        print "#Warning \'",name,".npz\' is not a file or directory"
+        print "#Warning \'"+name+".npz\' is not a file or directory"
         
     st.seqWordSyllables = NeuralSeq(name, identity)
     nsf.close()
     
     name = "seqSyllableLetters"
+    name = os.path.join(path, name)
     print "Loading "+name 
     try: 
         nsf = open(name+".npz", "r")
     except IOError:
-        print "#Warning \'",name,".npz\' is not a file or directory"
+        print "#Warning \'"+name+".npz\' is not a file or directory"
         
     st.seqSyllableLetters = NeuralSeq(name, identity)
     nsf.close()
     
     name = "seqPhraseWords"
+    name = os.path.join(path, name)
     print "Loading "+name
     try: 
         nsf = open(name+".npz", "r")
     except IOError:
-        print "#Warning \'",name,".npz\' is not a file or directory"
+        print "#Warning \'"+name+".npz\' is not a file or directory"
         
     st.seqPhraseWords = NeuralSeq(name, identity)
     nsf.close()
@@ -311,8 +329,7 @@ def learn(lp, ws):
         x[i] = lp
         y[i] = ws[i]
     
-    st.seqPhraseWords.train(x,y,0.01,0.0)
-    
+    st.seqPhraseWords.train(x,y,0.01,0.0)   
     
 def reset():
     st.seqLetterSyllable.reset()

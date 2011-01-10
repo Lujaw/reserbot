@@ -16,10 +16,12 @@
 
     Copyright 2010 neuromancer
 """
+import os, sys
 
 extra_words = ["."]
 
-corpus = map( lambda ls: filter((lambda l: l<>'\n'),ls), open('tokipona_corpus.txt','r').readlines())+extra_words
+path = os.path.join("src","languages","tokipona","raw_data")
+corpus = map( lambda ls: filter((lambda l: l<>'\n'),ls), open(os.path.join(path,'corpus.txt'),'r').readlines())+extra_words
     
 syllable = [
 	    "a-",	"e-",	"i-",	"o-",	"u",
