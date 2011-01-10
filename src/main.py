@@ -36,7 +36,7 @@ I am the word and my name is never spoken, the name which no one knows.
 I am called Ubik but that is not my name. I am. I shall always be.
 """
 
-parser = argparse.ArgumentParser(description='Reserbot')
+parser = argparse.ArgumentParser(description='reserbot\nproject Ubik')
 parser.add_argument('language', help='A language to use.')
 parser.add_argument('--interface', dest='interface', action='store',
                    default="console",

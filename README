@@ -1,18 +1,23 @@
-This is an extremely primitive version of reserbot.
+# Introduction
+
+This is a primitive version of reserbot. This bot tries to learn natural languages learning from imitation. 
+Now, it is possible to try to teach knowledge using an artificial language called tokipona:
+
+"Toki Pona is a simple language designed to express the most, using the least. The entire language has only 123 words 
+and 14 sounds. The grammar, although different from English, is very regular and easy to learn." 
+(from http://en.tokipona.org/wiki/What_is_Toki_Pona%3F)
 
 # Requirements (so far):
+ * Python 2.7 (I'm not use about other versions)
  * Oger (http://reservoir-computing.org/organic/engine)
 
 # How to use it:
- python control.py 
+ python src/main.py tokipona
 
 # Example session
 In this example session reserbot is taught to:
 * say pona if you say toki (at first of the conversation)
 * say nasa if you say telo (at first of the conversation)
-
-Welcome to the reserbot (alpha 0) shell.
-Type help or ? to list commands.
 
 --> load
 Loading bootstrapped neurosequencers.
@@ -92,7 +97,6 @@ Bye!
 
 TODO (coming up!): 
 
-* Code clean up
 * Theoretical documentation
 * Command line interface
 * Jabber interface
