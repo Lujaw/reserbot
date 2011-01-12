@@ -8,7 +8,7 @@ and 14 sounds. The grammar, although different from English, is very regular and
 (from http://en.tokipona.org/wiki/What_is_Toki_Pona%3F)
 
 # Requirements (so far):
- * Python 2.7 (I'm not use about other versions)
+ * Python 2.7 (I'm not sure about other versions)
  * Oger (http://reservoir-computing.org/organic/engine)
 
 # How to use it:
