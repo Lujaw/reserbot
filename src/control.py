@@ -20,8 +20,6 @@
 
 import numpy, cmd, readline, sys, os, random
 
-
-
 class Control:
     # Modules loaded
     modules = None
@@ -40,14 +38,20 @@ class Control:
     debug     = False
     version   = None
 
-    def __init__(self, language, interface, version):
+    def __init__(self, language, version, stdout):
         
-        self.interface = interface
         self.language = language
         self.version = version
         
-        sys.path.append(os.path.join("src","languages",language))
-        self.modules = __import__("modules")
+        self.stdout = stdout
+        
+        try: 
+            sys.path.append(os.path.join("src","languages",language))
+            self.modules = __import__("modules")
+        except ImportError:
+            print ""
+            print "language:",language,"is not available"
+            sys.exit(-1)
    
     # Conversation definitions
     
@@ -61,55 +65,65 @@ class Control:
         
         self.conversation = []
         self.conversation_started = True
-        print "Conversation started."
+        self.stdout.write("Conversation started.\n")
     
     def end_conversation(self):
         self.conversation_started = False
-        self.conversations.append(self.conversation)
+        self.conversations.append(self.conversation)     
+        self.stdout.write("Conversation ended.\n")
         
-        print "Conversation ended."
     def discard_conversation(self):
         self.conversation_started = False
         self.conversation = []
-        
-        print "Conversation aborted."
+        self.stdout.write("Conversation aborted.\n")
     
     # Cognitive definitions
     
     def process(self,inp):
         
         if (not self.conversation_started):
-            print "First, start a conversation."
+            self.stdout.write("First, start a conversation.\n")
             return
         
-        print "Processing \""+inp+"\""
+        self.stdout.write("Processing \""+inp+"\"\n")
         
         modules = self.modules
         
         # This is just an stub
         (p, ws) =  modules.input(inp)
-        out = modules.output(p,3,3,3) # How to adjust this parameters ?
+        out = modules.output(p,5,5,5) # How to adjust this parameters ?
         self.conversation.append((self.lastp,ws))
         self.lastp = p
-        print "<== "+out
+        
+        if (not self.debug):
+            out = filter(lambda c: c <> "-", out)
+        
+        self.stdout.write("<== "+out+"\n")
     
     def bootstrap(self):
+        
+        if (self.conversation_started):
+            self.stdout.write("First end or discard current conversation.\n")
+            return
+
         modules = self.modules
-        print "Bootstrapping "+self.language+" This can take a while..."
-        # Where is corpus ??
-        modules.bootstrap(modules.corpus, self.debug)
+        self.stdout.write("Bootstrapping "+self.language+" This can take a while...\n")
+        modules.bootstrap(modules.corpus, 0.1, 0.001, 30, True, self.debug)
         
     def rest(self):
         
         if (self.conversation_started):
-            print "First end or discard current conversation."
+            self.stdout.write("First end or discard current conversation.\n")
             return
     
         modules = self.modules
         
+        #modules.bootstrap(modules.corpus, 0.001, 0.001, 2, False, self.debug)
+        
         # This is just a stub
         its = 100
-        print "Resting ..."
+        self.stdout.write("Resting ...\n")
+        self.stdout.write("(wait please)\n")
         for it in range(its):
             perm = numpy.random.permutation(range(len(self.conversations)))
             for i in perm:
@@ -119,84 +133,74 @@ class Control:
                     if (not numpy.linalg.norm(lp) < 0.001):
                         modules.learn(lp,ws)
                         out = modules.output(lp,3,3,3)
-                        if (it % 10 == 0):
-                            print out            
+                        #if (it % 10 == 0):
+                        #    print out            
         
-            if (it % 10 == 0):
-                print "---"
+            #if (it % 10 == 0):
+            #    print "---"
     
-        print "Done."
+        self.stdout.write("Done.\n")
         
     def test_word_composition(self, word):
         
         modules = self.modules
         
-        print "Processing \""+word+"\""
-        modules.test([word], True)
+        word = filter(lambda c: c<> "\"", word)
+        
+        self.stdout.write("Processing \""+word+"\"\n")
+        (s,f) = modules.test([word], self.debug)
+        self.stdout.write(s)
     
     # IO definitions
     
     def save(self):
         modules = self.modules
         
-        print "Saving bootstrapped neurosequencers."
-        modules.save()
+        self.stdout.write("Saving bootstrapped neurosequencers.\n")
+        self.stdout.write(modules.save())
         
     def load(self):
+        
+        if (self.conversation_started):
+            self.stdout.write("First end or discard current conversation.\n")
+            return
+        
         modules = self.modules
         
-        print "Loading bootstrapped neurosequencers."
-        modules.load()
+        self.stdout.write("Loading bootstrapped neurosequencers.\n")
+        self.stdout.write(modules.load())
   
     
     # Basic commands definitions
     
     def toggle_debug(self):
         self.debug = not self.debug
-        print "Debug is "+str(self.debug)
+        self.stdout.write("Debug is "+str(self.debug)+"\n")
     def show_version(self):
-        print self.version
+        self.stdout.write(self.version)
         
 
 class Shell(cmd.Cmd):
-    #intro = 'Welcome to the reserbot ("""'+version.lower()+'"""") shell. \nType help or ? to list commands.\n'
-    intro  = ' '
+    intro  = None
     prompt = '--> '
     
-    def __init__(self, language, interface, version):
+    def __init__(self, intro, language, version, stdin = None, stdout = None):
     
+        self.stdin = stdin
+        self.stdout = stdout
+        self.cmdqueue = []
+        self.completekey = 'tab'
         
-        self.interface = interface
-        
-        if (self.interface == "console"):
-            #import sys
-            self.stdin = sys.stdin
-            self.stdout = sys.stdout
-            self.cmdqueue = []
-            self.completekey = 'tab'
-        
-        #elif (self.interface == "jabber"):
-        #    
-        #    sys.path.append(os.path.join("src","jabberbot"))
-        #    import jabberbot 
-        #    username = ''
-        #    password = ''
-        #    bot = jabberbot.JabberBot(username,password,res="FCEIA")
-        #    conn = bot.connect()
-        #    
-        #    while (True):
-        #        conn.Process(1)
-        #        
-        else:
-            print "Unknown interface."
-            
-        self.control = Control(language,interface, version)
+        self.control = Control(language, version, stdout)
+        self.stdout.write(str(intro)+"\n")
+        self.stdout.write(version+"\n")
+        self.stdout.write("Type help or ? to list commands.\n")
     
     # ----- basic commands -----
     
     def do_quit(self, arg):
         'Quit.'
-        print "Bye!"
+        self.stdout.write("Bye!\n")
         sys.exit(0)
     
     def do_exit(self, arg):
@@ -210,6 +214,7 @@ class Shell(cmd.Cmd):
     def do_version(self, arg):
         'Show version'
         self.control.show_version()
+        
         
     def do_debug(self, arg):
         'Toggle debug'
@@ -270,13 +275,56 @@ class Shell(cmd.Cmd):
     # ----------
     
     def default(self, arg):
-        print "Invalid command!"
+        self.stdout.write("Invalid command!")
     
     def precmd(self, line):
+        
         if line <> "EOF":
             line = line.lower()
         return line
     
     def emptyline(self):
         return 0
+
+
+def mkShell(intro, args, version):
+    
+    if (args.interface == "console"):
+        import sys
+        Shell(intro, args.language, version, sys.stdin, sys.stdout).cmdloop()
+        
+    elif (args.interface == "jabber"):
+        
+        import sys    
+        if args.username == None:
+            print "You have to specify a username to use jabber interface"
+            sys.exit(-1)
+        if args.password == None:
+            print "You have to specify a password to use jabber interface"
+            sys.exit(-1)
+        if args.jid == None:
+            print "You have to specify a jid to use jabber interface"
+            sys.exit(-1)
+        
+        sys.path.append(os.path.join("src","jabber"))
+        import jabberbot
+        
+        bot = jabberbot.JabberBot(args.username,args.password)
+        conn = bot.connect()
+        
+        if not conn:
+            sys.exit(-1)
+        
+        # bot is online!
+        jstdout = type('writable', (object,), {'write' : (lambda self,txt: bot.send(args.jid,txt))})()
+        
+        shell = Shell(intro, args.language, version, None, jstdout)
+        bot.setmycallback(shell.onecmd,args.jid)
+
+        while (True):
+            conn.Process(1)
+            
+    else:
+        print "Unknown interface."
+        
 

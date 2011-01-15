@@ -40,9 +40,13 @@ def input(inp):
     for word in inp.split(" "):
         ys = []
             
-        for syl in silabizar(word,map (lambda s: filter(lambda l: l<>'-',s), syllable)): 
-            ys.append(st.seqLetterSyllable.process_input(list(syl+"-")))
-        ys.append(st.seqLetterSyllable.process_input(list(" ")))  # last syllable
+        word = preprocess_word(word)
+            
+        for syl in silabizar(word,map (lambda s: filter(lambda l: l<>'-',s), syllables)): 
+            syl = preprocess_syllable(syl)
+            ys.append(st.seqLetterSyllable.process_input(list(syl)))
+        
+        #ys.append(st.seqLetterSyllable.process_input(list(" ")))  # last syllable
             
         yss.append(st.seqSyllableWord.process_input(ys))
             
@@ -63,7 +67,7 @@ def output(vphrase, max_words_, max_syls_, max_letters_):
         phrase = ""
         word = ""
         
-        while (word <> "." and max_words > 0):
+        while ( (not ("." in word)) and max_words > 0):
             
             vword = st.seqPhraseWords.next(vphrase)  # it's magic !
             word = ""
@@ -82,7 +86,7 @@ def output(vphrase, max_words_, max_syls_, max_letters_):
                 while (letter <> " " and letter <> "." and letter <> "-" and max_letters > 0):
                     letter = ""
                     t = st.seqSyllableLetters.next(vsyl)
-                    letter = abc[t.argmax()]
+                    letter = letters[t.argmax()]
                     syl = syl+letter
                     max_letters = max_letters - 1
                     
@@ -103,46 +107,86 @@ def output(vphrase, max_words_, max_syls_, max_letters_):
 
 
     
-def bootstrap(words, debug = False):
+def bootstrap(words, max_lr, min_lr, multiplier, use_test, debug):
     
+
     plotptest = []
     plotptrain = []
-    
-    max_lr = 0.1
-    min_lr = 0.001
-    
+
     pwords = random.permutation(words)
-    tsc = int((len(words)/100.0)*70)
     
-    trains = pwords[0:tsc]
-    tests  = pwords[tsc:len(words)]
+    # separation betewen test and train set (if use_test is True)
     
-    print "i: ",tsc
+    if use_test:
+        tsc = int((len(words)/100.0)*70)    
     
+        trains = pwords[0:tsc]             # 70% is going to train
+        tests  = pwords[tsc:len(words)]    # 30% is going to test
+    else:
+        tsc = len(words)          
+        trains = range(tsc)                # 100% is going to train
+        tests = []                         #   0% is going to test
+        
     ys  = []
-    its = 30*tsc
+    its = multiplier*tsc
     
     for it in range(its):
         
-        word = pwords[random.randint(0,len(pwords)-1)]
+        word = pwords[random.randint(0,len(pwords))]
+        word=preprocess_word(word)
         
-        word=word+" "
-        #print "using: ",word
-        if (it % 50 == 0):
+        #print "Using "+word
+        
+        if debug and (it % 50 == 0):
             print it
-            plotptest.append(test(tests, debug))
-            plotptrain.append(test(trains, debug))
-
-        for syl in silabizar(word,map (lambda s: filter(lambda l: l<>'-',s), syllable)):
+            print trains
+            if use_test:
+                (s,f) = test(tests, debug)
+                print s
+                plotptest.append(f)
             
-            if syl == " ": # end of word
-                ys.append(st.seqLetterSyllable.process_input(list(" ")))  # we add ' '
+            
+            (s,f) = test(trains, debug)
+            print s
+            plotptrain.append(f)
+
+        for syl in silabizar(word,map (lambda s: filter(lambda l: l<>'-',s), syllables)):
+            
+            
+            syl = preprocess_syllable(syl)
+            #print "Training with \""+syl+"\""    
+            
+            # use seqLetterSyllable to train seqSyllableLetters
+                
+            y = numpy.zeros((len(syl),st.letter_len))
+        
+            for i in range(len(syl)): 
+                y[i] = process(syl[i],letters)
+            
+            x = numpy.zeros((len(syl),st.syllable_len))
+            z = st.seqLetterSyllable.process_input(list(syl))
+        
+            for i in range(len(syl)): 
+                x[i] = z
+        
+            ys.append(z.copy())
+            # train seqSyllableLetters
+            st.seqSyllableLetters.reset()
+            lr = ((min_lr-max_lr)/its)*it + max_lr
+            st.seqSyllableLetters.train(x,y,lr,0.0)
+                
+            # --------------------------------------------------
+            
+            
+            if syl in extra_syllables: # end of word
+                
+                #print "Training with \""+word+"\""
+                
                 # use seqSyllableWord to train seqWordSyllables
                 y = numpy.zeros((len(ys),st.syllable_len)) 
                 
                 for i in range(len(ys)):
                     y[i] = ys[i]
-                    #print z
                     
                 x = numpy.zeros((len(ys),st.word_len))
                 z = st.seqSyllableWord.process_input(ys)
@@ -152,143 +196,131 @@ def bootstrap(words, debug = False):
                 
                 # train seqWordSyllables
                 st.seqWordSyllables.reset()
-                #for i in range(2):
-                #print ((min_lr-max_lr)/its)*it + max_lr
+
                 lr = ((min_lr-max_lr)/its)*it + max_lr
                 st.seqWordSyllables.train(x,y,lr,0.0)
                 ys = []
+                #st.seqSyllableLetters.train(x,y,lr,0.0)
                 
-            else:
-        
-                #print "Training with "+syl 
-    
-                # use seqLetterSyllable to train seqSyllableLetters
-                syl = syl + "-"
-                y = numpy.zeros((len(syl),st.letter_len))
-        
-                for i in range(len(syl)): 
-                    y[i] = process(syl[i],abc)
-            
-                x = numpy.zeros((len(syl),st.syllable_len))
-                z = st.seqLetterSyllable.process_input(list(syl))
-        
-                for i in range(len(syl)): 
-                    x[i] = z
-        
-                ys.append(z.copy())
-                st.seqSyllableLetters.reset()
-                lr = ((min_lr-max_lr)/its)*it + max_lr
-                st.seqSyllableLetters.train(x,y,lr,0.0)
-                
-    if debug:
-        
-        import matplotlib.pylab
-        testp = matplotlib.pylab.plot(range(0,its,50),plotptest)
-        trainp = matplotlib.pylab.plot(range(0,its,50),plotptrain)
-        matplotlib.pylab.show(testp+trainp)
-    
+    #if debug: 
+    #    import matplotlib.pylab
+    #    testp = matplotlib.pylab.plot(range(0,its,50),plotptest)
+    #    trainp = matplotlib.pylab.plot(range(0,its,50),plotptrain)
+    #    matplotlib.pylab.show(testp+trainp)
 
 def save():
     
     path = os.path.join("src","languages","tokipona","bootstrapped_data")
     
-    print "Saving seqLetterSyllable"
+    r = ""
+    
+    r = r + "Saving seqLetterSyllable\n"
     st.seqLetterSyllable.save(os.path.join(path, "seqLetterSyllable"))
-    print "Saving seqSyllableWord"
+    r = r +  "Saving seqSyllableWord\n"
     st.seqSyllableWord.save(os.path.join(path, "seqSyllableWord"))
-    print "Saving seqWordPhrase"
+    r = r + "Saving seqWordPhrase\n"
     st.seqWordPhrase.save(os.path.join(path, "seqWordPhrase"))
     
-    print "Saving seqSyllableLetters"
+    r = r + "Saving seqSyllableLetters\n"
     st.seqSyllableLetters.save(os.path.join(path, "seqSyllableLetters"))
-    print "Saving seqWordSyllables"
+    r = r +  "Saving seqWordSyllables\n"
     st.seqWordSyllables.save(os.path.join(path, "seqWordSyllables"))
-    print "Saving seqPhraseWords"
+    r = r +  "Saving seqPhraseWords\n"
     st.seqPhraseWords.save(os.path.join(path, "seqPhraseWords"))
-    
+    return r
 
 def load():
 
     path = os.path.join("src","languages","tokipona","bootstrapped_data")
-    
+    r = ""
     name = "seqLetterSyllable"
     name = os.path.join(path, name)
-    print "Loading "+name
+    r = r + "Loading "+name+"\n"
     try:
         nsf = open(name+".npz", "r")
     except IOError:
-        print "#Warning \'"+name+".npz\' is not a file or directory"
+        r = r +  "#Warning \'"+name+".npz\' is not a file or directory"+"\n"
+        return r
         
-    st.seqLetterSyllable = NeuralSeq(name, (lambda i: process(i,abc)))
+    st.seqLetterSyllable = NeuralSeq(name, (lambda i: process(i,letters)))
     nsf.close()
     
     name = "seqSyllableWord"
     name = os.path.join(path, name)
-    print "Loading "+name
+    r = r +  "Loading "+name+"\n"
     try:
         nsf = open(name+".npz", "r")
     except IOError:
-        print "#Warning \'"+name+".npz\' is not a file or directory"
+        r = r +  "#Warning \'"+name+".npz\' is not a file or directory"+"\n"
+        return r
         
     st.seqSyllableWord = NeuralSeq(name, identity)
     nsf.close()
     
     name = "seqWordPhrase"
     name = os.path.join(path, name)
-    print "Loading "+name
+    r = r +  "Loading "+name+"\n"
     try: 
         nsf = open(name+".npz", "r")
     except IOError:
-        print "#Warning \'"+name+".npz\' is not a file or directory"
+        r = r +  "#Warning \'"+name+".npz\' is not a file or directory"+"\n"
+        return r
         
     st.seqWordPhrase = NeuralSeq(name, identity)
     nsf.close()
     
     name = "seqWordSyllables"
     name = os.path.join(path, name)
-    print "Loading "+name
+    r = r +  "Loading "+name+"\n"
     try: 
         nsf = open(name+".npz", "r")
     except IOError:
-        print "#Warning \'"+name+".npz\' is not a file or directory"
+        print "#Warning \'"+name+".npz\' is not a file or directory"+"\n"
+        return r
         
     st.seqWordSyllables = NeuralSeq(name, identity)
     nsf.close()
     
     name = "seqSyllableLetters"
     name = os.path.join(path, name)
-    print "Loading "+name 
+    r = r + "Loading "+name +"\n"
     try: 
         nsf = open(name+".npz", "r")
     except IOError:
-        print "#Warning \'"+name+".npz\' is not a file or directory"
+        r = r +  "#Warning \'"+name+".npz\' is not a file or directory"+"\n"
+        return r
         
     st.seqSyllableLetters = NeuralSeq(name, identity)
     nsf.close()
     
     name = "seqPhraseWords"
     name = os.path.join(path, name)
-    print "Loading "+name
+    r = r +  "Loading "+name+"\n"
     try: 
         nsf = open(name+".npz", "r")
     except IOError:
-        print "#Warning \'"+name+".npz\' is not a file or directory"
+        r = r +  "#Warning \'"+name+".npz\' is not a file or directory"+"\n"
+        return r
         
     st.seqPhraseWords = NeuralSeq(name, identity)
     nsf.close()
+    return r
     
 
 def test(con, debug = False):
     err = 0
+    acc = ""
     for inp in con:
         
         ys = []
         
-        for syl in silabizar(inp,map (lambda s: filter(lambda l: l<>'-',s), syllable)): 
-            ys.append( st.seqLetterSyllable.process_input(list(syl+"-")) )
-            
+        inp = preprocess_word(inp)
         
-        ys.append( st.seqLetterSyllable.process_input(list(" ")))
+        for syl in silabizar(inp,map (lambda s: filter(lambda l: l<>'-',s), syllables)):
+            syl = preprocess_syllable(syl)
+            ys.append( st.seqLetterSyllable.process_input(list(syl)))
+            
+        #ys.append( st.seqLetterSyllable.process_input(list(" ")))
         z = st.seqSyllableWord.process_input(ys)
         
         st.seqWordSyllables.reset()
@@ -302,22 +334,26 @@ def test(con, debug = False):
             
             st.seqSyllableLetters.reset()
             
-            for j in range(4):
+            for j in range(5): # How to adjust this parameter ?
             
                 if (c == '-' or c == ' '):
                     break
                 
                 tt = st.seqSyllableLetters.next(t)
-                c = abc[tt.argmax()] 
+                c = letters[tt.argmax()] 
                 r = r+c
             
+            acc = acc + r 
             if debug:
-                print r,
-            #print "-",
-    
-    if debug:
-        print ""
-    return err / len(con)
+                if  r[-1]<>"-":
+                    acc = acc + "-"
+            else:
+                acc = filter(lambda c: c <> "-", acc)
+                
+        acc = acc + "\n"
+    #if debug:
+    #    print ""
+    return (acc, err / len(con))
     
     
 def learn(lp, ws):

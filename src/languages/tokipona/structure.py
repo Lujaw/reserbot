@@ -24,14 +24,14 @@ from tokipona import *
 # initialization
     
 nres         = 200
-letter_len   = len(abc)
+letter_len   = len(letters)
 syllable_len = 100
 word_len     = 100
 phrase_len   = 30
 
 # input  sequencers
                                 #input         #size  #output
-seqLetterSyllable  = NeuralSeq( letter_len,    nres,  syllable_len,    (lambda i: process(i,abc)))
+seqLetterSyllable  = NeuralSeq( letter_len,    nres,  syllable_len,    (lambda i: process(i,letters)))
 seqSyllableWord    = NeuralSeq( syllable_len,  nres,  word_len,        identity)
 seqWordPhrase      = NeuralSeq( word_len,      nres,  phrase_len,      identity) # non textual input coming soon!
 

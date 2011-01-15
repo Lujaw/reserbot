@@ -18,12 +18,23 @@
 """
 import os, sys
 
-extra_words = ["."]
+# corpus
 
+extra_words = ["."]
 path = os.path.join("src","languages","tokipona","raw_data")
-corpus = map( lambda ls: filter((lambda l: l<>'\n'),ls), open(os.path.join(path,'corpus.txt'),'r').readlines())+extra_words
+corpus = map( lambda ls: filter((lambda l: l<>'\n'),ls), open(os.path.join(path,'corpus.txt'),'r').readlines())
+corpus = corpus + extra_words
+
+def preprocess_word(word):
+    if not (word in extra_words):
+            return (word+" ")
+    return word
+
     
-syllable = [
+# syllables
+
+extra_syllables = [" ", "."]    
+syllables = [
 	    "a-",	"e-",	"i-",	"o-",	"u",
             "ka-",	"ke-",	"ki-",	"ko-",	"ku-",
             "sa-",	"se-",	"si-",	"so-",	"su-", 
@@ -39,11 +50,23 @@ syllable = [
 	    "len-",	"wen-", "sin-",	"pin-",	"lon-",
 	    "pan-",	"kin-",	"pen-",	"nan-",	"mun-",
 	    "an-",	"in-",	"en-",	"un-",	"es-",
-	    " ",	"."
            ]
-	   
-syllable =  sorted(syllable, key = len, reverse = True)
-abc = "abcdefghijklmnopqrstuvwxyz-. "
+
+syllables = syllables + extra_syllables
+syllables =  sorted(syllables, key = len, reverse = True)
+
+def preprocess_syllable(syllable):
+    if not (syllable in extra_syllables):
+            return (syllable+"-")
+    return syllable           
+
+# letters
+
+extra_letters = " .-"
+letters       = "abcdefghijklmnopqrstuvwxyz" 
+letters       = letters + extra_letters
+
+# syllabification
 
 def silabizar(w,ss):
     wo = w

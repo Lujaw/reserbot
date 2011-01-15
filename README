@@ -12,7 +12,16 @@ and 14 sounds. The grammar, although different from English, is very regular and
  * Oger (http://reservoir-computing.org/organic/engine)
 
 # How to use it:
- python src/main.py tokipona
+
+ ./start.sh tokipona --interface console
+ 
+or
+ 
+ ./start.sh tokipona --interface jabber  --user JABBERUSER --pass PASSWORD --jid JID
+
+or
+
+ ./start.sh --help
 
 # Example session
 In this example session reserbot is taught to:
@@ -98,6 +107,5 @@ Bye!
 TODO (coming up!): 
 
 * Theoretical documentation
-* Command line interface
-* Jabber interface
+* Better jabber interface
 * Complete learning subsystem: Long term memory!

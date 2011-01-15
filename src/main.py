@@ -20,7 +20,7 @@
 import argparse
 import control as ctr
 
-version = "Alpha 0 - Codename: Ralph Wiggum (\"I\'m special!\")"
+version = "Alpha 0 - Codename: Ralph Wiggum (\"I\'m special!\")\n"
 ascii_intro = """
  _   _______ _____ _   __
 | | | | ___ \_   _| | / /
@@ -36,16 +36,23 @@ I am the word and my name is never spoken, the name which no one knows.
 I am called Ubik but that is not my name. I am. I shall always be.
 """
 
-parser = argparse.ArgumentParser(description='reserbot\nproject Ubik')
+print "reserbot: project Ubik\n"
+
+parser = argparse.ArgumentParser(description='')
 parser.add_argument('language', help='A language to use.')
 parser.add_argument('--interface', dest='interface', action='store',
                    default="console",
                    help='An interface to use (default is console).')
+parser.add_argument('--user', dest='username', action='store',
+                   default=None,
+                   help='Username to use in jabber interface.')
+parser.add_argument('--pass', dest='password', action='store',
+                   default=None,
+                   help='Password to use in jabber interface.')
+parser.add_argument('--jid', dest='jid', action='store',
+                   default=None,
+                   help='Jabber user to listen in jabber interface.\n(others will be ignored)')
 
 
 args = parser.parse_args()
-
-print ascii_intro
-print version
-
-ctr.Shell(args.language, args.interface, version).cmdloop()
+ctr.mkShell(ascii_intro, args, version)
