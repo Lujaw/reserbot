@@ -200,7 +200,7 @@ class Shell(cmd.Cmd):
     
     def do_quit(self, arg):
         'Quit.'
-        self.stdout.write("Bye!\n")
+        self.stdout.write("bye!\n")
         sys.exit(0)
     
     def do_exit(self, arg):

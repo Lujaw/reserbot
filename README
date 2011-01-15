@@ -30,79 +30,50 @@ In this example session reserbot is taught to:
 
 --> load
 Loading bootstrapped neurosequencers.
-Loading seqLetterSyllable
-Loading seqSyllableWord
-Loading seqWordPhrase
-Loading seqWordSyllables
-Loading seqSyllableLetters
-Loading seqPhraseWords
+Loading src/languages/tokipona/bootstrapped_data/seqLetterSyllable
+Loading src/languages/tokipona/bootstrapped_data/seqSyllableWord
+Loading src/languages/tokipona/bootstrapped_data/seqWordPhrase
+Loading src/languages/tokipona/bootstrapped_data/seqWordSyllables
+Loading src/languages/tokipona/bootstrapped_data/seqSyllableLetters
+Loading src/languages/tokipona/bootstrapped_data/seqPhraseWords
 --> start
 Conversation started.
 --> say toki .
 Processing "toki ."
-<== s-s-s- k-t-t- k-te-t- 
+<== momisisnmn         
 --> say pona .
 Processing "pona ."
-<== k-te-tei- k-wei-t- k-te-t- 
+<==           
 --> end
 Conversation ended.
 --> start
 Conversation started.
 --> say telo .
 Processing "telo ."
-<== s-se-s- k-se-t- k-tep-p- 
+<== msissim         
 --> say nasa .
 Processing "nasa ."
-<== m-tei-tei- k-tei-t- k-te-t- 
+<==           
 --> end
 Conversation ended.
 --> rest
 Resting ...
-na-ua-ua- .- .- 
-ko-na-ua- k-ua-ua- k-ua-ua- 
----
-ko-na-ua- .- .- 
-na-sa-ua- .- .- 
----
-ko-na-ua- .- .- 
-ka-sa-ua- .- .- 
----
-na-sa-ua- .- .- 
-ko-na-ua- .- .- 
----
-ko-na-ua- .- .- 
-na-sa-ua- .- .- 
----
-ko-na-ua- .- .- 
-na-sa-ua- .- .- 
----
-na-sa-ua- .- .- 
-ko-na-ua- .- .- 
----
-ko-na-ua- .- .- 
-na-sa-ua- .- .- 
----
-na-sa-ua- .- .- 
-ko-na-ua- .- .- 
----
-ko-na-ua- .- .- 
-na-sa-ua- .- .- 
----
+(wait please)
 Done.
---> start 
+--> start
 Conversation started.
 --> say toki .
 Processing "toki ."
-<== ko-na-ua- .- .- 
+<== pona  . 
 --> discard
 Conversation aborted.
 --> start
 Conversation started.
 --> say telo .
 Processing "telo ."
-<== na-sa-ua- .- .- 
---> 
-Bye!
+<== nasa  . 
+--> quit
+bye!
 
 TODO (coming up!): 
 
