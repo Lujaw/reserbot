@@ -68,8 +68,8 @@ def output(vphrase, max_words_, max_syls_, max_letters_):
         word = ""
         
         while ( (not ("." in word)) and max_words > 0):
-            
-            vword = st.seqPhraseWords.next(vphrase)  # it's magic !
+                
+            vword = st.seqPhraseWords.next(vphrase)
             word = ""
             syl = ""
                 
@@ -218,15 +218,15 @@ def save():
     st.seqLetterSyllable.save(os.path.join(path, "seqLetterSyllable"))
     r = r +  "Saving seqSyllableWord\n"
     st.seqSyllableWord.save(os.path.join(path, "seqSyllableWord"))
-    r = r + "Saving seqWordPhrase\n"
-    st.seqWordPhrase.save(os.path.join(path, "seqWordPhrase"))
+    #r = r + "Saving seqWordPhrase\n"
+    #st.seqWordPhrase.save(os.path.join(path, "seqWordPhrase"))
     
     r = r + "Saving seqSyllableLetters\n"
     st.seqSyllableLetters.save(os.path.join(path, "seqSyllableLetters"))
     r = r +  "Saving seqWordSyllables\n"
     st.seqWordSyllables.save(os.path.join(path, "seqWordSyllables"))
-    r = r +  "Saving seqPhraseWords\n"
-    st.seqPhraseWords.save(os.path.join(path, "seqPhraseWords"))
+    #r = r +  "Saving seqPhraseWords\n"
+    #st.seqPhraseWords.save(os.path.join(path, "seqPhraseWords"))
     return r
 
 def load():
@@ -257,14 +257,14 @@ def load():
     st.seqSyllableWord = NeuralSeq(name, identity)
     nsf.close()
     
-    name = "seqWordPhrase"
-    name = os.path.join(path, name)
-    r = r +  "Loading "+name+"\n"
-    try: 
-        nsf = open(name+".npz", "r")
-    except IOError:
-        r = r +  "#Warning \'"+name+".npz\' is not a file or directory"+"\n"
-        return r
+    #name = "seqWordPhrase"
+    #name = os.path.join(path, name)
+    #r = r +  "Loading "+name+"\n"
+    #try: 
+    #    nsf = open(name+".npz", "r")
+    #except IOError:
+    #    r = r +  "#Warning \'"+name+".npz\' is not a file or directory"+"\n"
+    #    return r
         
     st.seqWordPhrase = NeuralSeq(name, identity)
     nsf.close()
@@ -293,17 +293,17 @@ def load():
     st.seqSyllableLetters = NeuralSeq(name, identity)
     nsf.close()
     
-    name = "seqPhraseWords"
-    name = os.path.join(path, name)
-    r = r +  "Loading "+name+"\n"
-    try: 
-        nsf = open(name+".npz", "r")
-    except IOError:
-        r = r +  "#Warning \'"+name+".npz\' is not a file or directory"+"\n"
-        return r
-        
-    st.seqPhraseWords = NeuralSeq(name, identity)
-    nsf.close()
+    #name = "seqPhraseWords"
+    #name = os.path.join(path, name)
+    #r = r +  "Loading "+name+"\n"
+    #try: 
+    #    nsf = open(name+".npz", "r")
+    #except IOError:
+    #    r = r +  "#Warning \'"+name+".npz\' is not a file or directory"+"\n"
+    #    return r
+    #    
+    #st.seqPhraseWords = NeuralSeq(name, identity)
+    #nsf.close()
     return r
     
 
@@ -365,7 +365,10 @@ def learn(lp, ws):
         x[i] = lp
         y[i] = ws[i]
     
-    st.seqPhraseWords.train(x,y,0.01,0.0)   
+    st.seqPhraseWords.train(x,y,0.01,0.0)
+    
+def freshmem(clist):
+    st.seqPhraseWords.freshmem(clist)
     
 def reset():
     st.seqLetterSyllable.reset()

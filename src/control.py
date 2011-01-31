@@ -19,16 +19,16 @@
 
 
 import numpy, cmd, readline, sys, os, random
+from conv import *
 
 class Control:
     # Modules loaded
     modules = None
     
     # Conversation state
-    conversation_started = False
-    lastp                = None
-    conversations        = []
-    conversation         = []
+    conversation = None
+    conversations = []
+
 
     # Language
     language = None
@@ -52,6 +52,8 @@ class Control:
             print ""
             print "language:",language,"is not available"
             sys.exit(-1)
+            
+        self.conversation = Conversation()
    
     # Conversation definitions
     
@@ -60,49 +62,71 @@ class Control:
         
         modules.reset()
         
-        self.lastp = modules.initial_phrase 
-        self.lastp = numpy.array([self.lastp])
+        self.conversation = Conversation()
+        self.conversation.start()
         
-        self.conversation = []
-        self.conversation_started = True
+        initial_phrase = numpy.array([modules.initial_phrase])
+        self.conversation.add_processed_phrase(initial_phrase)
+
         self.stdout.write("Conversation started.\n")
     
     def end_conversation(self):
-        self.conversation_started = False
+        self.conversation.end()
         self.conversations.append(self.conversation)     
         self.stdout.write("Conversation ended.\n")
         
     def discard_conversation(self):
-        self.conversation_started = False
-        self.conversation = []
+        self.conversation.end()
         self.stdout.write("Conversation aborted.\n")
+        
+    def clean_conversations(self):
+        self.conversation.end()
+        self.conversations = []
+        self.stdout.write("Conversations cleaned.\n")
+        
+    #def give_feedback(self,args):
+    #    
+    #    modules = self.modules
+    #    
+    #    #Primitive feedback system   
+    #    if args == "+":
+    #        out = modules.output(self.lastp,5,5,5)
+    #        
+    #        if (not self.debug):
+    #            out = filter(lambda c: c <> "-", out)
+    #        
+    #        self.stdout.write("feedback is "+args+"\n")
+    #        self.stdout.write("prediction: "+out+"\n")
+    #
     
     # Cognitive definitions
     
     def process(self,inp):
         
-        if (not self.conversation_started):
+        if (not self.conversation.started):
             self.stdout.write("First, start a conversation.\n")
             return
         
         self.stdout.write("Processing \""+inp+"\"\n")
         
         modules = self.modules
-        
+            
         # This is just an stub
         (p, ws) =  modules.input(inp)
         out = modules.output(p,5,5,5) # How to adjust this parameters ?
-        self.conversation.append((self.lastp,ws))
-        self.lastp = p
+        
+        self.conversation.add_processed_words(ws)    
+        self.conversation.add_processed_phrase(p)
+        
         
         if (not self.debug):
             out = filter(lambda c: c <> "-", out)
         
         self.stdout.write("<== "+out+"\n")
-    
+        
     def bootstrap(self):
         
-        if (self.conversation_started):
+        if (self.conversation.started):
             self.stdout.write("First end or discard current conversation.\n")
             return
 
@@ -112,35 +136,51 @@ class Control:
         
     def rest(self):
         
-        if (self.conversation_started):
+        if (self.conversation.started):
             self.stdout.write("First end or discard current conversation.\n")
             return
+        
+        
+        if (self.conversations == []):
+            self.stdout.write("No conversations available for resting.\n")
+            return
+        
     
         modules = self.modules
         
         #modules.bootstrap(modules.corpus, 0.001, 0.001, 2, False, self.debug)
         
-        # This is just a stub
-        its = 100
+        # This is NOT definitive (just a stub)
+        
+        its = 100*len(self.conversations)
+        
         self.stdout.write("Resting ...\n")
         self.stdout.write("(wait please)\n")
+        
+        clist = map( lambda c: c.processed_phrases(), self.conversations)
+        modules.freshmem(clist)
+        
         for it in range(its):
             perm = numpy.random.permutation(range(len(self.conversations)))
             for i in perm:
-                c = self.conversations[i]
+                c = self.conversations[i].processed_words_phrases()
                 modules.reset()
-                for (lp,ws) in c:
-                    if (not numpy.linalg.norm(lp) < 0.001):
-                        modules.learn(lp,ws)
-                        out = modules.output(lp,3,3,3)
-                        #if (it % 10 == 0):
-                        #    print out            
-        
-            #if (it % 10 == 0):
-            #    print "---"
-    
+                for (p,ws) in c[1:]:
+
+                    modules.learn(p,ws)
+                    out = modules.output(p,3,3,3)
+                    #if (it % 10 == 0):
+                    #    print filter(lambda c: c <> "-", out)            
+            
         self.stdout.write("Done.\n")
         
+    #def sleep(self):
+    #    
+    #    modules = self.modules
+    #    self.stdout.write("Consolidating knowledge ...\n")
+    #    modules.consolidate()
+    #    self.stdout.write("Done!\n")
+   
     def test_word_composition(self, word):
         
         modules = self.modules
@@ -161,7 +201,7 @@ class Control:
         
     def load(self):
         
-        if (self.conversation_started):
+        if (self.conversation.started):
             self.stdout.write("First end or discard current conversation.\n")
             return
         
@@ -169,6 +209,7 @@ class Control:
         
         self.stdout.write("Loading bootstrapped neurosequencers.\n")
         self.stdout.write(modules.load())
+        self.clean_conversations()
   
     
     # Basic commands definitions
@@ -235,6 +276,13 @@ class Shell(cmd.Cmd):
         'Abort current conversation'
         self.control.discard_conversation()
     
+    def do_clean(self, arg):
+        'Abort current conversation and delete conversation log'
+        self.control.clean_conversations()
+    
+    #def do_feedback(self, arg):
+    #    'Give feedback during the conversation'
+    #    self.control.give_feedback(arg)
     
     def do_bootstrap(self, arg):
         'Start bootstrapping process.'
@@ -243,6 +291,10 @@ class Shell(cmd.Cmd):
     def do_rest(self, arg):
         'Train brain with recent conversations'
         self.control.rest()
+        
+    def do_sleep(self, arg):
+        ''
+        self.control.sleep()
         
     # ----- IO commands -----
     def do_save(self, arg):
@@ -275,16 +327,21 @@ class Shell(cmd.Cmd):
     # ----------
     
     def default(self, arg):
-        self.stdout.write("Invalid command!")
+        self.stdout.write("Invalid command!\n")
     
     def precmd(self, line):
         
+        # comments support
+        if line <> "" and line.lstrip()[0] == "#":
+            return ""
+            
         if line <> "EOF":
             line = line.lower()
         return line
     
     def emptyline(self):
-        return 0
+        self.stdout.write("\n")
+        return ""
 
 
 def mkShell(intro, args, version):

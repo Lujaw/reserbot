@@ -20,7 +20,7 @@
 import argparse
 import control as ctr
 
-version = "Alpha 0 - Codename: Ralph Wiggum (\"I\'m special!\")\n"
+version = "Alpha 1 - Codename: Wendell Borton (\"Bllluuhhhhh...!!\")\n"
 ascii_intro = """
  _   _______ _____ _   __
 | | | | ___ \_   _| | / /
@@ -37,6 +37,9 @@ I am called Ubik but that is not my name. I am. I shall always be.
 """
 
 print "reserbot: project Ubik\n"
+
+# check if Oger is installed
+import Oger
 
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('language', help='A language to use.')

@@ -18,6 +18,7 @@
 """
 
 from ns       import *
+from mem      import *
 from aux      import *
 from tokipona import *
 
@@ -27,7 +28,7 @@ nres         = 200
 letter_len   = len(letters)
 syllable_len = 100
 word_len     = 100
-phrase_len   = 30
+phrase_len   = 100
 
 # input  sequencers
                                 #input         #size  #output
@@ -41,4 +42,5 @@ seqWordSyllables   = NeuralSeq( word_len,      nres, syllable_len,     identity)
 seqSyllableLetters = NeuralSeq( syllable_len,  nres, letter_len,       identity)    
 
 # asociator 
-seqPhraseWords     = NeuralSeq( phrase_len,    nres, word_len,         identity) # non textual output coming soon!
+#seqPhraseWords     = NeuralSeq( phrase_len,    nres, word_len,         identity) # non textual output coming soon!
+seqPhraseWords     = Memory( phrase_len,    nres, word_len,         identity) # non textual output coming soon!

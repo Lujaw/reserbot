@@ -1,82 +1,55 @@
 # Introduction
 
-This is a primitive version of reserbot. This bot tries to learn natural languages learning from imitation. 
+This is a primitive version of reserbot. This bot tries to learn natural languages from simple imitation. 
+It is designed using a connectionist approach, with echo state neural networks. 
 Now, it is possible to try to teach knowledge using an artificial language called tokipona:
 
 "Toki Pona is a simple language designed to express the most, using the least. The entire language has only 123 words 
 and 14 sounds. The grammar, although different from English, is very regular and easy to learn." 
 (from http://en.tokipona.org/wiki/What_is_Toki_Pona%3F)
 
-# Requirements (so far):
- * Python 2.7 (I'm not sure about other versions)
- * Oger (http://reservoir-computing.org/organic/engine)
+Additional languages are planned.
 
-# How to use it:
+# How it works?
 
- ./start.sh tokipona --interface console
+There is some documentation of theory and implementation in the wiki:
+
+https://github.com/neuromancer/reserbot/wiki/ 
+
+## Required dependencies for reserbot:
+
+* Python 2.7
+* Oger                           (http://reservoir-computing.org/oger) 
+  and this package requires:
+     - Numpy 1.1 or higher       (http://numpy.scipy.org/)   
+     - Scipy 0.7 or higher       (http://www.scipy.org/)
+     - Matplotlib 0.99 or higher (http://matplotlib.sourceforge.net/)
+     - MDP 2.5 or higher         (http://mdp-toolkit.sourceforge.net/)
+
+## Optional packages
+* Xmpppy                         (http://xmpppy.sourceforge.net/) for jabber support
+
+# How to use it?:
+## Starting
+
+To start this chatterbot, it is necessary to specify which language is going to use and which interface
+For example, if you want to test it locally:
+
+   ./start.sh tokipona --interface console
  
-or
+or, you can try the jabber interface
  
- ./start.sh tokipona --interface jabber  --user JABBERUSER --pass PASSWORD --jid JID
+   ./start.sh tokipona --interface jabber  --user JABBERUSER --pass PASSWORD --jid JID
 
-or
+## Using the shell
 
- ./start.sh --help
-
-# Example session
-In this example session reserbot is taught to:
-* say pona if you say toki (at first of the conversation)
-* say nasa if you say telo (at first of the conversation)
-
---> load
-Loading bootstrapped neurosequencers.
-Loading src/languages/tokipona/bootstrapped_data/seqLetterSyllable
-Loading src/languages/tokipona/bootstrapped_data/seqSyllableWord
-Loading src/languages/tokipona/bootstrapped_data/seqWordPhrase
-Loading src/languages/tokipona/bootstrapped_data/seqWordSyllables
-Loading src/languages/tokipona/bootstrapped_data/seqSyllableLetters
-Loading src/languages/tokipona/bootstrapped_data/seqPhraseWords
---> start
-Conversation started.
---> say toki .
-Processing "toki ."
-<== momisisnmn         
---> say pona .
-Processing "pona ."
-<==           
---> end
-Conversation ended.
---> start
-Conversation started.
---> say telo .
-Processing "telo ."
-<== msissim         
---> say nasa .
-Processing "nasa ."
-<==           
---> end
-Conversation ended.
---> rest
-Resting ...
-(wait please)
-Done.
---> start
-Conversation started.
---> say toki .
-Processing "toki ."
-<== pona  . 
---> discard
-Conversation aborted.
---> start
-Conversation started.
---> say telo .
-Processing "telo ."
-<== nasa  . 
---> quit
-bye!
+Some example on how to use the shell are available here:
+ 
+https://github.com/neuromancer/reserbot/wiki/Examples
 
 TODO (coming up!): 
 
-* Theoretical documentation
-* Better jabber interface
-* Complete learning subsystem: Long term memory!
+* Improved theoretical and technical documentation.
+* Complete learning subsystem: 
+    - Corrective feedback
+    - Long term memory
